@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0F">
+<meta name="description" content="Pixel Browser — a premium browser workspace by PixelProTech Solutions.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pixel Browser">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+<title>Pixel Browser — PixelProTech Solutions</title>
+<style>
+:root{
+  /* PixelProTech brand palette */
+  --bg:#0A0A0F;
+  --panel:#111118;
+  --card:#1A1A2E;
+  --border:rgba(255,255,255,.08);
+  --primary:#7B2FFF;
+  --accent:#00D4AA;
+  --success:#22C55E;
+  --warning:#F59E0B;
+  --danger:#EF4444;
+  --text:#FFFFFF;
+  --text-secondary:rgba(255,255,255,.5);
+  --radius:18px;
+  --radius-sm:10px;
+  --shadow: 0 10px 40px rgba(0,0,0,.45);
+  --dur:180ms;
+}
+[data-theme="light"]{
+  --bg:#F4F3F8; --panel:#FFFFFF; --card:#F0EEF9; --border:rgba(10,10,15,.08);
+  --text:#0A0A0F; --text-secondary:#5B5A66;
+}
+[data-theme="midnight"]{
+  --bg:#040406; --panel:#0a0a10; --card:#111118; --primary:#7B2FFF; --accent:#00D4AA;
+}
+[data-theme="ocean"]{
+  --bg:#08151C; --panel:#0E2029; --card:#122833; --primary:#0EA5E9; --accent:#00D4AA;
+}
+[data-theme="graphite"]{
+  --bg:#101113; --panel:#17181B; --card:#1E2023; --primary:#8B8F99; --accent:#C7CBD1;
+}
+[data-theme="pixelblue"]{
+  --bg:#0A0A0F; --panel:#111118; --card:#1A1A2E; --primary:#7B2FFF; --accent:#00D4AA;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  background:var(--bg); color:var(--text);
+  overflow:hidden; transition: background var(--dur), color var(--dur);
+}
+body.reduced-motion *{ transition:none !important; animation:none !important; }
+.app{ display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:56px 1fr; height:100vh; }
+
+/* TOPBAR */
+.topbar{
+  grid-column:1/4; grid-row:1;
+  display:flex; align-items:center; gap:12px;
+  padding:0 16px; background:var(--panel); border-bottom:1px solid var(--border);
+  -webkit-app-region:drag;
+}
+.logo{ display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; letter-spacing:.5px; }
+.logo .dot{ width:10px; height:10px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent)); }
+.nav-btns{ display:flex; gap:4px; -webkit-app-region:no-drag; }
+.icon-btn{
+  width:32px; height:32px; border-radius:var(--radius-sm); border:none; background:transparent;
+  color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:15px; transition:background var(--dur), color var(--dur);
+}
+.icon-btn:hover{ background:var(--card); color:var(--text); }
+.icon-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+.address-bar{
+  flex:1; display:flex; align-items:center; gap:8px; background:var(--card);
+  border:1px solid var(--border); border-radius:12px; padding:0 12px; height:36px;
+  -webkit-app-region:no-drag;
+}
+.address-bar input{
+  flex:1; background:transparent; border:none; color:var(--text); font-size:13px; outline:none;
+}
+.address-bar input::placeholder{ color:var(--text-secondary); }
+.engine-select{
+  background:transparent; border:none; color:var(--text-secondary); font-size:12px; outline:none; cursor:pointer;
+}
+.engine-select option{ background:var(--panel); color:var(--text); }
+.topbar-right{ display:flex; align-items:center; gap:6px; -webkit-app-region:no-drag; }
+.clock{ font-size:12px; color:var(--text-secondary); min-width:64px; text-align:right; }
+.avatar{
+  width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent));
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; cursor:pointer;
+}
+.win-controls{ display:flex; gap:4px; margin-left:8px; }
+.win-controls .icon-btn{ width:28px; height:28px; }
+
+/* SIDEBAR */
+.sidebar{
+  grid-column:1; grid-row:2;
+  width:220px; background:var(--panel); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; padding:12px 8px; gap:2px; overflow-y:auto;
+  transition:width var(--dur);
+}
+.sidebar.collapsed{ width:64px; }
+.sidebar.collapsed .nav-label, .sidebar.collapsed .section-title{ display:none; }
+.sidebar-toggle{ align-self:flex-end; margin-bottom:8px; }
+.section-title{
+  font-size:10px; letter-spacing:1.5px; color:var(--text-secondary); text-transform:uppercase;
+  padding:12px 10px 6px;
+}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:9px 10px; border-radius:var(--radius-sm);
+  color:var(--text-secondary); cursor:pointer; font-size:13px; font-weight:500; user-select:none;
+  transition:background var(--dur), color var(--dur), transform var(--dur);
+}
+.nav-item .nav-icon{ width:18px; text-align:center; flex-shrink:0; font-size:15px; }
+.nav-item:hover{ background:var(--card); color:var(--text); }
+.nav-item.active{ background:linear-gradient(90deg, rgba(30,136,255,.18), rgba(56,189,248,.06)); color:var(--text); }
+.nav-item.active .nav-icon{ color:var(--accent); }
+.nav-item:active{ transform:scale(.98); }
+
+/* MAIN */
+.main{
+  grid-column:2; grid-row:2; overflow-y:auto; padding:28px 32px; position:relative;
+}
+.view{ display:none; animation:fadeIn 220ms ease; }
+.view.active{ display:block; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+h1.page-title{ font-size:26px; font-weight:700; margin-bottom:4px; }
+.page-sub{ color:var(--text-secondary); font-size:13px; margin-bottom:24px; }
+.grid{ display:grid; gap:16px; }
+.grid-2{ grid-template-columns:1fr 1fr; }
+.grid-3{ grid-template-columns:repeat(3,1fr); }
+.card{
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  padding:18px; transition:transform var(--dur), box-shadow var(--dur);
+}
+.card:hover{ transform:translateY(-2px); box-shadow:var(--shadow); }
+.card h3{ font-size:14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.muted{ color:var(--text-secondary); font-size:12px; }
+.btn{
+  background:var(--primary); color:#fff; border:none; border-radius:10px; padding:8px 14px;
+  font-size:12px; font-weight:600; cursor:pointer; transition:filter var(--dur), transform var(--dur);
+}
+.btn:hover{ filter:brightness(1.12); }
+.btn:active{ transform:scale(.97); }
+.btn.secondary{ background:var(--panel); border:1px solid var(--border); color:var(--text); }
+.btn.danger{ background:var(--danger); }
+.btn.ghost{ background:transparent; border:1px solid var(--border); color:var(--text-secondary); }
+input, textarea, select{
+  font-family:inherit; background:var(--panel); border:1px solid var(--border); color:var(--text);
+  border-radius:10px; padding:8px 10px; font-size:13px; outline:none;
+}
+input:focus, textarea:focus, select:focus{ border-color:var(--primary); }
+.list-row{
+  display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px;
+  transition:background var(--dur);
+}
+.list-row:hover{ background:var(--panel); }
+.progress{ height:6px; background:var(--panel); border-radius:4px; overflow:hidden; }
+.progress-fill{ height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .3s ease; }
+.badge{ font-size:10px; padding:3px 8px; border-radius:20px; background:var(--panel); color:var(--text-secondary); }
+.badge.success{ color:var(--success); }
+.badge.warning{ color:var(--warning); }
+.badge.danger{ color:var(--danger); }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:var(--card); border-radius:8px; }
+::-webkit-scrollbar-track{ background:transparent; }
+
+/* TABS BAR (browser view) */
+.tabs-bar{ display:flex; gap:6px; align-items:center; margin-bottom:14px; overflow-x:auto; padding-bottom:4px; }
+.tab-chip{
+  display:flex; align-items:center; gap:8px; padding:7px 10px; background:var(--card);
+  border:1px solid var(--border); border-radius:10px; font-size:12px; cursor:pointer; white-space:nowrap;
+  transition:background var(--dur);
+}
+.tab-chip.active{ background:var(--panel); border-color:var(--primary); }
+.tab-chip .close-x{ color:var(--text-secondary); font-size:11px; padding:2px; }
+.tab-chip .close-x:hover{ color:var(--danger); }
+.browser-frame{
+  height:calc(100vh - 260px); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border);
+  background:var(--panel); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px;
+}
+.browser-frame iframe{ width:100%; height:100%; border:none; }
+
+/* AI PANEL */
+.ai-panel{
+  position:fixed; top:56px; right:0; bottom:0; width:340px; background:var(--panel);
+  border-left:1px solid var(--border); transform:translateX(100%); transition:transform var(--dur) ease;
+  display:flex; flex-direction:column; z-index:50;
+}
+.ai-panel.open{ transform:translateX(0); }
+.ai-header{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--border); }
+.ai-messages{ flex:1; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.ai-msg{ max-width:88%; padding:10px 12px; border-radius:12px; font-size:13px; line-height:1.45; }
+.ai-msg.user{ align-self:flex-end; background:var(--primary); color:#fff; border-bottom-right-radius:4px; }
+.ai-msg.bot{ align-self:flex-start; background:var(--card); border-bottom-left-radius:4px; }
+.ai-input-row{ padding:12px; border-top:1px solid var(--border); display:flex; gap:8px; }
+.ai-input-row input{ flex:1; }
+
+/* TERMINAL */
+.terminal{
+  background:#05060A; border-radius:var(--radius); border:1px solid var(--border); padding:16px;
+  font-family:'Courier New',monospace; font-size:13px; height:420px; overflow-y:auto; color:#7CFFB2;
+}
+.terminal .line{ margin-bottom:4px; white-space:pre-wrap; word-break:break-word; }
+.terminal .prompt{ color:var(--accent); }
+.terminal-input-row{ display:flex; gap:8px; margin-top:8px; }
+.terminal-input-row .prompt{ color:var(--accent); align-self:center; }
+.terminal input{
+  flex:1; background:transparent; border:none; color:#7CFFB2; font-family:'Courier New',monospace; font-size:13px;
+}
+
+/* SETTINGS */
+.setting-row{ display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid var(--border); }
+.setting-row:last-child{ border-bottom:none; }
+.switch{ position:relative; width:40px; height:22px; }
+.switch input{ opacity:0; width:0; height:0; }
+.slider{ position:absolute; inset:0; background:var(--panel); border:1px solid var(--border); border-radius:20px; cursor:pointer; transition:background var(--dur); }
+.slider:before{ content:""; position:absolute; height:16px; width:16px; left:2px; top:2px; background:var(--text-secondary); border-radius:50%; transition:transform var(--dur), background var(--dur); }
+.switch input:checked + .slider{ background:var(--primary); }
+.switch input:checked + .slider:before{ transform:translateX(18px); background:#fff; }
+.theme-swatch{
+  width:100%; height:56px; border-radius:12px; cursor:pointer; border:2px solid transparent;
+  display:flex; align-items:flex-end; padding:8px; font-size:10px; font-weight:600; color:#fff;
+}
+.theme-swatch.selected{ border-color:var(--accent); }
+.color-swatches{ display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:10px; }
+.kbd{ background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:2px 7px; font-size:11px; font-family:'Courier New',monospace; }
+textarea.code-area{ width:100%; min-height:140px; font-family:'Courier New',monospace; font-size:12.5px; resize:vertical; }
+.dev-output{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px; font-family:'Courier New',monospace; font-size:12px; white-space:pre-wrap; word-break:break-word; min-height:60px; }
+.color-picker-preview{ height:80px; border-radius:12px; border:1px solid var(--border); margin-bottom:10px; }
+.strength-bar{ height:6px; border-radius:4px; background:var(--panel); overflow:hidden; margin-top:8px; }
+.notice{ padding:10px 14px; border-radius:10px; background:rgba(30,136,255,.1); border:1px solid rgba(30,136,255,.3); font-size:12px; color:var(--accent); margin-bottom:16px; }
+@media (max-width: 900px){
+  .sidebar{ position:fixed; left:0; top:56px; bottom:0; z-index:40; }
+  .grid-2, .grid-3{ grid-template-columns:1fr; }
+  .ai-panel{ width:100%; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo"><span class="dot"></span>Pixel Browser</div>
+    <div class="nav-btns">
+      <button class="icon-btn" title="Back" onclick="toast('Back')">←</button>
+      <button class="icon-btn" title="Forward" onclick="toast('Forward')">→</button>
+      <button class="icon-btn" title="Refresh" onclick="toast('Refreshed')">⟳</button>
+      <button class="icon-btn" title="Home" onclick="navigate('dashboard')">⌂</button>
+    </div>
+    <div class="address-bar">
+      <span class="muted">🔒</span>
+      <input id="addressInput" placeholder="Search or enter address" />
+      <select class="engine-select" id="engineSelect">
+        <option>Google</option><option>DuckDuckGo</option><option>Brave Search</option>
+        <option>Kagi</option><option>Bing</option><option>SearXNG</option><option>Custom</option>
+      </select>
+    </div>
+    <button class="icon-btn" title="New tab" onclick="newTab()">+</button>
+    <div class="topbar-right">
+      <button class="icon-btn" title="Toggle theme" onclick="cycleTheme()">◐</button>
+      <button class="icon-btn" title="Notifications" onclick="toast('No new notifications')">🔔</button>
+      <button class="icon-btn" title="AI Assistant" onclick="toggleAI()">✦</button>
+      <span class="clock" id="clock">--:--</span>
+      <div class="avatar" title="Account">PT</div>
+      <div class="win-controls">
+        <button class="icon-btn">–</button>
+        <button class="icon-btn">▢</button>
+        <button class="icon-btn">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <button class="icon-btn sidebar-toggle" onclick="toggleSidebar()">☰</button>
+    <div class="section-title">Workspace</div>
+    <div class="nav-item active" data-view="dashboard"><span class="nav-icon">⌂</span><span class="nav-label">Home</span></div>
+    <div class="nav-item" data-view="browser"><span class="nav-icon">🌐</span><span class="nav-label">Browser</span></div>
+    <div class="nav-item" data-view="workspace"><span class="nav-icon">▦</span><span class="nav-label">Workspace</span></div>
+    <div class="nav-item" data-view="files"><span class="nav-icon">🗂</span><span class="nav-label">Files</span></div>
+    <div class="section-title">Browsing</div>
+    <div class="nav-item" data-view="bookmarks"><span class="nav-icon">★</span><span class="nav-label">Bookmarks</span></div>
+    <div class="nav-item" data-view="downloads"><span class="nav-icon">⬇</span><span class="nav-label">Downloads</span></div>
+    <div class="nav-item" data-view="history"><span class="nav-icon">⟲</span><span class="nav-label">History</span></div>
+    <div class="nav-item" data-view="vault"><span class="nav-icon">🔑</span><span class="nav-label">Password Vault</span></div>
+    <div class="section-title">Productivity</div>
+    <div class="nav-item" data-view="notes"><span class="nav-icon">✎</span><span class="nav-label">Notes</span></div>
+    <div class="nav-item" data-view="ai"><span class="nav-icon">✦</span><span class="nav-label">AI Assistant</span></div>
+    <div class="nav-item" data-view="pdf"><span class="nav-icon">📄</span><span class="nav-label">PDF Viewer</span></div>
+    <div class="nav-item" data-view="media"><span class="nav-icon">▶</span><span class="nav-label">Media</span></div>
+    <div class="section-title">Dev</div>
+    <div class="nav-item" data-view="terminal"><span class="nav-icon">⌨</span><span class="nav-label">Terminal</span></div>
+    <div class="nav-item" data-view="developer"><span class="nav-icon">{ }</span><span class="nav-label">Developer</span></div>
+    <div class="section-title">System</div>
+    <div class="nav-item" data-view="settings"><span class="nav-icon">⚙</span><span class="nav-label">Settings</span></div>
+    <div class="nav-item" data-view="updates"><span class="nav-icon">⇪</span><span class="nav-label">Updates</span></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main" id="main">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <h1 class="page-title" id="greeting">Good day</h1>
+      <div class="page-sub">Welcome back to your Pixel workspace.</div>
+      <div class="grid grid-3" style="margin-bottom:16px;">
+        <div class="card">
+          <h3>Pinned sites</h3>
+          <div id="pinnedSites"></div>
+        </div>
+        <div class="card">
+          <h3>Weather <span class="badge">Johannesburg</span></h3>
+          <div class="muted">Weather widget placeholder — connect a provider in Settings.</div>
+        </div>
+        <div class="card">
+          <h3>Focus timer</h3>
+          <div style="font-size:32px; font-weight:700; text-align:center; margin:10px 0;" id="timerDisplay">25:00</div>
+          <div style="display:flex; gap:8px; justify-content:center;">
+            <button class="btn" onclick="timerStart()">Start</button>
+            <button class="btn secondary" onclick="timerReset()">Reset</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Quick note</h3>
+          <textarea id="quickNote" placeholder="Jot something down..." style="width:100%; min-height:90px;"></textarea>
+          <div style="margin-top:8px; text-align:right;"><button class="btn secondary" onclick="saveQuickNote()">Save to Notes</button></div>
+        </div>
+        <div class="card">
+          <h3>Recent downloads</h3>
+          <div id="dashDownloads"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BROWSER -->
+    <div class="view" id="view-browser">
+      <h1 class="page-title">Browser</h1>
+      <div class="page-sub">Tabbed browsing workspace.</div>
+      <div class="tabs-bar" id="tabsBar"></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+        <div class="muted" id="browserUrlLabel"></div>
+        <button class="btn secondary" id="openExternalBtn" style="display:none;" onclick="openExternal()">Open in new browser tab ↗</button>
+      </div>
+      <div class="browser-frame" id="browserFrame">
+        <div class="muted">Enter a URL in the address bar and press Enter to load a tab.</div>
+      </div>
+      <div class="muted" style="margin-top:8px;">Some sites (banking, social platforms, etc.) block being displayed inside another page for security reasons. If a page looks blank, use "Open in new browser tab" above — that opens the real, live site.</div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="view" id="view-workspace">
+      <h1 class="page-title">Workspace</h1>
+      <div class="page-sub">Your productivity board.</div>
+      <div class="grid grid-3">
+        <div class="card"><h3>Shortcuts</h3><div class="muted">Drag apps here to build a personal launcher.</div></div>
+        <div class="card"><h3>Recent files</h3><div id="wsFiles"></div></div>
+        <div class="card"><h3>Notes</h3><div id="wsNotes" class="muted">No notes yet.</div></div>
+      </div>
+    </div>
+
+    <!-- FILES -->
+    <div class="view" id="view-files">
+      <h1 class="page-title">File Manager</h1>
+      <div class="page-sub">Drag files here to add them to your workspace.</div>
+      <div class="grid" style="grid-template-columns:200px 1fr;">
+        <div class="card">
+          <h3>Folders</h3>
+          <div class="nav-item active" style="color:var(--text);">📁 All Files</div>
+          <div class="nav-item">🖼 Images</div>
+          <div class="nav-item">🎬 Videos</div>
+          <div class="nav-item">🎵 Audio</div>
+          <div class="nav-item">📄 Documents</div>
+          <div class="nav-item">🗜 Archives</div>
+        </div>
+        <div class="card" id="dropZone" style="border:2px dashed var(--border); display:flex; flex-direction:column;">
+          <h3>Files <button class="btn secondary" onclick="document.getElementById('fileInput').click()">Upload</button></h3>
+          <input type="file" id="fileInput" multiple style="display:none;">
+          <div id="fileList" class="muted">Drop files here or click Upload — no files yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOOKMARKS -->
+    <div class="view" id="view-bookmarks">
+      <h1 class="page-title">Bookmarks</h1>
+      <div class="page-sub">Save and organize your favorite sites.</div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input id="bmName" placeholder="Name" style="flex:1;">
+        <input id="bmUrl" placeholder="https://example.com" style="flex:2;">
+        <button class="btn" onclick="addBookmark()">Add bookmark</button>
+      </div>
+      <div class="card"><div id="bookmarkList"></div></div>
+    </div>
+
+    <!-- DOWNLOADS -->
+    <div class="view" id="view-downloads">
+      <h1 class="page-title">Downloads</h1>
+      <div class="page-sub">Track and manage file downloads.</div>
+      <div style="margin-bottom:12px;"><button class="btn" onclick="simulateDownload()">Simulate download</button></div>
+      <div class="card"><div id="downloadList"></div></div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="view" id="view-history">
+      <h1 class="page-title">History</h1>
+      <div class="page-sub">Your browsing timeline.</div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input id="historySearch" placeholder="Search history..." style="flex:1;" oninput="renderHistory()">
+        <button class="btn ghost" onclick="clearHistory('today')">Clear today</button>
+        <button class="btn ghost" onclick="clearHistory('all')">Clear all</button>
+      </div>
+      <div class="card"><div id="historyList"></div></div>
+    </div>
+
+    <!-- PASSWORD VAULT -->
+    <div class="view" id="view-vault">
+      <h1 class="page-title">Password Vault</h1>
+      <div class="notice">Demo only — passwords are stored in memory for this session and are not encrypted.</div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>Generate password</h3>
+          <div style="font-family:'Courier New',monospace; font-size:16px; background:var(--panel); padding:10px; border-radius:10px; margin-bottom:10px;" id="genPassOutput">••••••••••••</div>
+          <label class="muted">Length: <span id="lenVal">16</span></label>
+          <input type="range" min="6" max="32" value="16" id="lenSlider" style="width:100%;" oninput="document.getElementById('lenVal').textContent=this.value">
+          <div style="display:flex; gap:14px; margin:10px 0; font-size:12px;">
+            <label><input type="checkbox" id="optSym" checked> Symbols</label>
+            <label><input type="checkbox" id="optNum" checked> Numbers</label>
+            <label><input type="checkbox" id="optUpper" checked> Uppercase</label>
+          </div>
+          <div class="strength-bar"><div class="progress-fill" id="strengthFill" style="width:0%;"></div></div>
+          <div style="margin-top:12px; display:flex; gap:8px;">
+            <button class="btn" onclick="generatePassword()">Generate</button>
+            <button class="btn secondary" onclick="copyGenPass()">Copy</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Saved entries</h3>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <input id="vaultSite" placeholder="Site" style="flex:1;">
+            <input id="vaultUser" placeholder="Username" style="flex:1;">
+            <button class="btn secondary" onclick="addVaultEntry()">Save</button>
+          </div>
+          <div id="vaultList" class="muted">No entries yet.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="view" id="view-notes">
+      <h1 class="page-title">Notes</h1>
+      <div class="page-sub">Markdown-friendly notes, autosaved to session.</div>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input id="noteSearch" placeholder="Search notes..." style="flex:1;" oninput="renderNotes()">
+        <button class="btn" onclick="createNote()">New note</button>
+      </div>
+      <div class="grid" style="grid-template-columns:220px 1fr;">
+        <div class="card"><div id="noteList"></div></div>
+        <div class="card">
+          <input id="noteTitle" placeholder="Title" style="width:100%; margin-bottom:10px; font-weight:600;" oninput="autosaveNote()">
+          <textarea id="noteBody" placeholder="Write in markdown..." style="width:100%; min-height:320px;" oninput="autosaveNote()"></textarea>
+          <div class="muted" id="noteSaveStatus" style="margin-top:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PDF -->
+    <div class="view" id="view-pdf">
+      <h1 class="page-title">PDF Viewer</h1>
+      <div class="page-sub">Open a PDF to preview it here.</div>
+      <div style="margin-bottom:12px;"><button class="btn" onclick="document.getElementById('pdfInput').click()">Open PDF</button><input type="file" id="pdfInput" accept="application/pdf" style="display:none;" onchange="loadPdf(event)"></div>
+      <div class="browser-frame" id="pdfFrame"><div class="muted">No document open.</div></div>
+    </div>
+
+    <!-- MEDIA -->
+    <div class="view" id="view-media">
+      <h1 class="page-title">Media Player</h1>
+      <div class="page-sub">Play local audio or video files.</div>
+      <div style="margin-bottom:12px; display:flex; gap:8px;">
+        <button class="btn" onclick="document.getElementById('mediaInput').click()">Open file</button>
+        <input type="file" id="mediaInput" accept="audio/*,video/*" style="display:none;" onchange="loadMedia(event)">
+      </div>
+      <div class="card" id="mediaCard"><div class="muted">Nothing playing.</div></div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="view" id="view-terminal">
+      <h1 class="page-title">Terminal</h1>
+      <div class="page-sub">Try: <span class="kbd">help</span> <span class="kbd">clear</span> <span class="kbd">date</span> <span class="kbd">echo</span> <span class="kbd">whoami</span> <span class="kbd">theme</span></div>
+      <div class="terminal" id="termOutput"></div>
+      <div class="terminal terminal-input-row" style="height:auto; padding:10px 16px;">
+        <span class="prompt">pixel@browser:~$</span>
+        <input id="termInput" autocomplete="off" onkeydown="if(event.key==='Enter')runCommand()">
+      </div>
+    </div>
+
+    <!-- DEVELOPER -->
+    <div class="view" id="view-developer">
+      <h1 class="page-title">Developer Tools</h1>
+      <div class="page-sub">Everyday utilities for building on the web.</div>
+      <div class="grid grid-2">
+        <div class="card">
+          <h3>JSON formatter</h3>
+          <textarea class="code-area" id="jsonInput" placeholder='{"key":"value"}'></textarea>
+          <div style="margin:8px 0; display:flex; gap:8px;">
+            <button class="btn secondary" onclick="formatJson()">Format</button>
+            <button class="btn secondary" onclick="minifyJson()">Minify</button>
+          </div>
+          <div class="dev-output" id="jsonOutput"></div>
+        </div>
+        <div class="card">
+          <h3>Color picker & gradient</h3>
+          <input type="color" id="colorPick" value="#7B2FFF" style="width:100%; height:40px;" oninput="updateColor()">
+          <div class="dev-output" id="colorOutput" style="margin-top:10px;"></div>
+          <div class="color-picker-preview" id="gradPreview" style="margin-top:10px;"></div>
+        </div>
+        <div class="card">
+          <h3>UUID generator</h3>
+          <div class="dev-output" id="uuidOutput">Click generate.</div>
+          <div style="margin-top:8px;"><button class="btn secondary" onclick="genUuid()">Generate</button></div>
+        </div>
+        <div class="card">
+          <h3>Base64 encode / decode</h3>
+          <textarea class="code-area" id="b64Input" placeholder="Text to encode/decode"></textarea>
+          <div style="margin:8px 0; display:flex; gap:8px;">
+            <button class="btn secondary" onclick="b64encode()">Encode</button>
+            <button class="btn secondary" onclick="b64decode()">Decode</button>
+          </div>
+          <div class="dev-output" id="b64Output"></div>
+        </div>
+        <div class="card">
+          <h3>Regex tester</h3>
+          <input id="regexPattern" placeholder="/pattern/flags" style="width:100%; margin-bottom:8px;">
+          <textarea class="code-area" id="regexInput" placeholder="Test string"></textarea>
+          <div style="margin:8px 0;"><button class="btn secondary" onclick="testRegex()">Test</button></div>
+          <div class="dev-output" id="regexOutput"></div>
+        </div>
+        <div class="card">
+          <h3>Live HTML preview</h3>
+          <textarea class="code-area" id="htmlInput" placeholder="<h1>Hello</h1>">&lt;h1 style="color:#7B2FFF"&gt;Hello Pixel&lt;/h1&gt;</textarea>
+          <div style="margin:8px 0;"><button class="btn secondary" onclick="renderHtml()">Preview</button></div>
+          <iframe id="htmlPreview" style="width:100%; height:120px; border-radius:10px; border:1px solid var(--border); background:#fff;"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="view" id="view-settings">
+      <h1 class="page-title">Settings</h1>
+      <div class="page-sub">Personalize your Pixel Browser experience.</div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Theme</h3>
+        <div class="color-swatches" id="themeSwatches"></div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <h3>Accessibility</h3>
+        <div class="setting-row"><span>Reduced motion</span><label class="switch"><input type="checkbox" id="reducedMotion" onchange="toggleReducedMotion()"><span class="slider"></span></label></div>
+        <div class="setting-row"><span>High contrast text</span><label class="switch"><input type="checkbox" id="highContrast" onchange="toggleHighContrast()"><span class="slider"></span></label></div>
+        <div class="setting-row"><span>Collapse sidebar by default</span><label class="switch"><input type="checkbox" onchange="toggleSidebar()"><span class="slider"></span></label></div>
+      </div>
+      <div class="card">
+        <h3>Keyboard shortcuts</h3>
+        <div class="setting-row"><span>New tab</span><span class="kbd">Ctrl+T</span></div>
+        <div class="setting-row"><span>Close tab</span><span class="kbd">Ctrl+W</span></div>
+        <div class="setting-row"><span>Address bar</span><span class="kbd">Ctrl+L</span></div>
+        <div class="setting-row"><span>Bookmark</span><span class="kbd">Ctrl+D</span></div>
+        <div class="setting-row"><span>History</span><span class="kbd">Ctrl+H</span></div>
+        <div class="setting-row"><span>Downloads</span><span class="kbd">Ctrl+J</span></div>
+        <div class="setting-row"><span>Settings</span><span class="kbd">Ctrl+,</span></div>
+        <div class="setting-row"><span>Fullscreen</span><span class="kbd">F11</span></div>
+      </div>
+      <div class="card" style="margin-top:16px;">
+        <h3>Install Pixel Browser</h3>
+        <div class="muted" style="margin-bottom:10px;">Install this app to your desktop or phone home screen for a native, offline-ready experience.</div>
+        <button class="btn" id="installBtn" onclick="promptInstall()" style="display:none;">Install app</button>
+        <div class="muted" id="installHint">On iPhone/iPad: tap Share → "Add to Home Screen". On Android/desktop Chrome: use the install icon in the address bar, or the button above once available.</div>
+      </div>
+      <div class="card" style="margin-top:16px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="muted">pixelprotechsolutions@gmail.com</div>
+        <div style="color:var(--primary); font-size:12px;">076 645 9348</div>
+      </div>
+    </div>
+
+    <!-- UPDATES -->
+    <div class="view" id="view-updates">
+      <h1 class="page-title">Updates</h1>
+      <div class="page-sub">Pixel Browser is up to date — v1.0.0</div>
+      <div class="card">
+        <h3>Roadmap</h3>
+        <div class="list-row"><span class="badge success">Now</span> Phase 1 — Browser Workspace</div>
+        <div class="list-row"><span class="badge">Next</span> Phase 2 — Cloud Sync</div>
+        <div class="list-row"><span class="badge">Planned</span> Phase 3 — Extensions</div>
+        <div class="list-row"><span class="badge">Planned</span> Phase 4 — Developer Marketplace</div>
+        <div class="list-row"><span class="badge">Planned</span> Phase 5 — Pixel AI Cloud</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI PANEL -->
+<div class="ai-panel" id="aiPanel">
+  <div class="ai-header"><strong>Pixel AI</strong><button class="icon-btn" onclick="toggleAI()">✕</button></div>
+  <div class="ai-messages" id="aiMessages">
+    <div class="ai-msg bot">Hi, I'm Pixel AI. Ask me to summarize a page, write code, or brainstorm ideas.</div>
+  </div>
+  <div class="ai-input-row">
+    <input id="aiInput" placeholder="Message Pixel AI..." onkeydown="if(event.key==='Enter')sendAiMessage()">
+    <button class="btn" onclick="sendAiMessage()">Send</button>
+  </div>
+</div>
+
+<div id="toastBox" style="position:fixed; bottom:20px; left:50%; transform:translateX(-50%); z-index:100;"></div>
+
+<script>
+/* ---------- NAVIGATION ---------- */
+function navigate(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const item = document.querySelector('.nav-item[data-view="'+view+'"]');
+  if(item) item.classList.add('active');
+  document.getElementById('main').scrollTop = 0;
+}
+document.querySelectorAll('.nav-item[data-view]').forEach(el=>{
+  el.addEventListener('click', ()=>navigate(el.dataset.view));
+});
+
+function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('collapsed'); }
+
+/* ---------- THEME ---------- */
+const themes = [
+  {id:'dark', name:'PixelProTech Dark', c1:'#0A0A0F', c2:'#7B2FFF'},
+  {id:'light', name:'Light', c1:'#F4F3F8', c2:'#7B2FFF'},
+  {id:'midnight', name:'Midnight', c1:'#040406', c2:'#00D4AA'},
+  {id:'ocean', name:'Ocean', c1:'#08151C', c2:'#0EA5E9'},
+  {id:'graphite', name:'Graphite', c1:'#101113', c2:'#8B8F99'},
+  {id:'pixelblue', name:'Pixel Purple', c1:'#0A0A0F', c2:'#00D4AA'}
+];
+let currentThemeIndex = 0;
+function applyTheme(id){
+  if(id==='dark'){ document.body.removeAttribute('data-theme'); } else { document.body.setAttribute('data-theme', id); }
+  currentThemeIndex = themes.findIndex(t=>t.id===id);
+  renderThemeSwatches();
+}
+function cycleTheme(){
+  currentThemeIndex = (currentThemeIndex+1) % themes.length;
+  applyTheme(themes[currentThemeIndex].id);
+  toast('Theme: '+themes[currentThemeIndex].name);
+}
+function renderThemeSwatches(){
+  const el = document.getElementById('themeSwatches');
+  el.innerHTML = themes.map((t,i)=>`<div class="theme-swatch ${i===currentThemeIndex?'selected':''}" style="background:linear-gradient(135deg,${t.c1},${t.c2})" onclick="applyTheme('${t.id}')">${t.name}</div>`).join('');
+}
+function toggleReducedMotion(){ document.body.classList.toggle('reduced-motion', document.getElementById('reducedMotion').checked); }
+function toggleHighContrast(){
+  document.documentElement.style.setProperty('--text-secondary', document.getElementById('highContrast').checked ? 'var(--text)' : '#A3ABB8');
+}
+
+/* ---------- CLOCK & GREETING ---------- */
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const h = now.getHours();
+  const greet = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = greet + ', welcome back';
+}
+setInterval(updateClock, 1000); updateClock();
+
+/* ---------- TOAST ---------- */
+function toast(msg){
+  const box = document.getElementById('toastBox');
+  const t = document.createElement('div');
+  t.textContent = msg;
+  t.style.cssText = 'background:var(--card); border:1px solid var(--border); color:var(--text); padding:10px 16px; border-radius:10px; margin-top:8px; font-size:13px; box-shadow:var(--shadow); animation:fadeIn 200ms ease;';
+  box.appendChild(t);
+  setTimeout(()=>t.remove(), 2400);
+}
+
+/* ---------- PINNED SITES ---------- */
+const pinned = [
+  {name:'GitHub', url:'https://github.com'},
+  {name:'MDN Web Docs', url:'https://developer.mozilla.org'},
+  {name:'Anthropic', url:'https://anthropic.com'}
+];
+function renderPinned(){
+  document.getElementById('pinnedSites').innerHTML = pinned.map(p=>
+    `<div class="list-row"><span>🔗</span><span>${p.name}</span><button class="btn ghost" style="margin-left:auto;" onclick="openTab('${p.url}','${p.name}')">Open</button></div>`
+  ).join('');
+}
+
+/* ---------- TABS / BROWSER ---------- */
+let tabs = []; let activeTabId = null; let tabCounter = 0;
+function newTab(){ openTab('about:blank', 'New Tab'); navigate('browser'); }
+function openTab(url, name){
+  const id = 'tab'+(++tabCounter);
+  tabs.push({id, url, name: name || url, pinned:false, muted:false});
+  activeTabId = id;
+  renderTabs(); renderBrowserFrame();
+  addHistory(name||url, url);
+}
+function closeTab(id, e){
+  if(e) e.stopPropagation();
+  tabs = tabs.filter(t=>t.id!==id);
+  if(activeTabId===id) activeTabId = tabs.length ? tabs[tabs.length-1].id : null;
+  renderTabs(); renderBrowserFrame();
+}
+function selectTab(id){ activeTabId = id; renderTabs(); renderBrowserFrame(); }
+function renderTabs(){
+  document.getElementById('tabsBar').innerHTML = tabs.map(t=>
+    `<div class="tab-chip ${t.id===activeTabId?'active':''}" onclick="selectTab('${t.id}')">
+      <span>${t.pinned?'📌':''}${t.muted?'🔇':'🌐'} ${t.name}</span>
+      <span class="close-x" onclick="closeTab('${t.id}', event)">✕</span>
+    </div>`
+  ).join('') || '<span class="muted">No tabs open — press + or Ctrl+T</span>';
+}
+function renderBrowserFrame(){
+  const frame = document.getElementById('browserFrame');
+  const tab = tabs.find(t=>t.id===activeTabId);
+  const extBtn = document.getElementById('openExternalBtn');
+  const label = document.getElementById('browserUrlLabel');
+  if(!tab || tab.url==='about:blank'){
+    frame.innerHTML = '<div class="muted">Enter a URL in the address bar and press Enter to load a tab.</div>';
+    extBtn.style.display = 'none';
+    label.textContent = '';
+    return;
+  }
+  label.textContent = tab.url;
+  extBtn.style.display = 'inline-block';
+  frame.innerHTML = `<iframe id="liveFrame" src="${tab.url}" title="${tab.name}"></iframe>`;
+  const iframe = document.getElementById('liveFrame');
+  let loaded = false;
+  iframe.addEventListener('load', ()=>{ loaded = true; });
+  // Many sites send X-Frame-Options / CSP headers that silently block embedding
+  // (no JS error fires). Heuristic: if nothing has loaded shortly after navigation,
+  // assume it was blocked and offer the real, working fallback.
+  setTimeout(()=>{
+    if(!loaded && document.getElementById('liveFrame')){
+      frame.innerHTML = `<div class="muted" style="text-align:center; padding:0 40px;">This site can't be displayed inside Pixel Browser's embedded frame — it blocks embedding for security.<br><br>
+      <button class="btn" onclick="openExternal()">Open ${tab.name} in a new browser tab ↗</button></div>`;
+    }
+  }, 2800);
+}
+function openExternal(){
+  const tab = tabs.find(t=>t.id===activeTabId);
+  if(tab && tab.url !== 'about:blank') window.open(tab.url, '_blank', 'noopener,noreferrer');
+}
+document.getElementById('addressInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    let val = e.target.value.trim();
+    if(!val) return;
+    let url;
+    if(/^https?:\/\//i.test(val)) url = val;
+    else if(/^[\w-]+\.[a-z]{2,}(\/.*)?$/i.test(val)) url = 'https://'+val;
+    else {
+      const engine = document.getElementById('engineSelect').value;
+      const engines = {'Google':'https://www.google.com/search?q=','DuckDuckGo':'https://duckduckgo.com/?q=','Brave Search':'https://search.brave.com/search?q=','Kagi':'https://kagi.com/search?q=','Bing':'https://www.bing.com/search?q=','SearXNG':'https://searx.org/?q=','Custom':'https://www.google.com/search?q='};
+      url = (engines[engine]||engines.Google) + encodeURIComponent(val);
+    }
+    openTab(url, val.slice(0,28));
+    navigate('browser');
+    e.target.value = '';
+  }
+});
+
+/* ---------- HISTORY ---------- */
+let history = [];
+function addHistory(name, url){ history.unshift({name, url, time: new Date()}); renderHistory(); }
+function renderHistory(){
+  const q = (document.getElementById('historySearch')?.value || '').toLowerCase();
+  const list = document.getElementById('historyList');
+  if(!list) return;
+  const filtered = history.filter(h => h.name.toLowerCase().includes(q) || h.url.toLowerCase().includes(q));
+  list.innerHTML = filtered.length ? filtered.map(h=>
+    `<div class="list-row"><span>⟲</span><div><div>${h.name}</div><div class="muted">${h.url}</div></div><span class="muted" style="margin-left:auto;">${h.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>`
+  ).join('') : '<div class="muted">No history yet — browse a site to see it appear here.</div>';
+}
+function clearHistory(mode){ history = []; renderHistory(); toast('History cleared'); }
+
+/* ---------- BOOKMARKS ---------- */
+let bookmarks = [{name:'Anthropic', url:'https://anthropic.com'}];
+function addBookmark(){
+  const name = document.getElementById('bmName').value.trim();
+  const url = document.getElementById('bmUrl').value.trim();
+  if(!name || !url){ toast('Enter a name and URL'); return; }
+  bookmarks.push({name, url});
+  document.getElementById('bmName').value=''; document.getElementById('bmUrl').value='';
+  renderBookmarks();
+}
+function removeBookmark(i){ bookmarks.splice(i,1); renderBookmarks(); }
+function renderBookmarks(){
+  document.getElementById('bookmarkList').innerHTML = bookmarks.map((b,i)=>
+    `<div class="list-row"><span>★</span><div><div>${b.name}</div><div class="muted">${b.url}</div></div>
+    <button class="btn ghost" style="margin-left:auto;" onclick="openTab('${b.url}','${b.name}')">Open</button>
+    <button class="btn ghost" onclick="removeBookmark(${i})">Remove</button></div>`
+  ).join('') || '<div class="muted">No bookmarks yet.</div>';
+}
+
+/* ---------- DOWNLOADS ---------- */
+let downloads = [];
+function simulateDownload(){
+  const names = ['brand-assets.zip','quarterly-report.pdf','wireframes.fig','demo-video.mp4','dataset.csv'];
+  const name = names[Math.floor(Math.random()*names.length)];
+  const d = {id:Date.now(), name, progress:0, status:'downloading'};
+  downloads.unshift(d);
+  renderDownloads();
+  const interval = setInterval(()=>{
+    d.progress += Math.random()*22;
+    if(d.progress >= 100){ d.progress = 100; d.status='completed'; clearInterval(interval); }
+    renderDownloads();
+  }, 350);
+}
+function renderDownloads(){
+  const list = document.getElementById('downloadList');
+  list.innerHTML = downloads.length ? downloads.map(d=>
+    `<div class="list-row" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between;"><span>${d.name}</span><span class="badge ${d.status==='completed'?'success':''}">${d.status}</span></div>
+      <div class="progress" style="margin-top:6px;"><div class="progress-fill" style="width:${d.progress}%"></div></div>
+    </div>`
+  ).join('') : '<div class="muted">No downloads yet.</div>';
+  document.getElementById('dashDownloads').innerHTML = downloads.slice(0,3).map(d=>`<div class="list-row"><span>⬇</span><span>${d.name}</span><span class="badge" style="margin-left:auto;">${d.status}</span></div>`).join('') || '<div class="muted">Nothing recent.</div>';
+}
+
+/* ---------- NOTES ---------- */
+let notes = [{id:1, title:'Welcome', body:'# Welcome to Pixel Notes\\n\\nStart writing in markdown.'}];
+let activeNoteId = 1;
+function createNote(){
+  const id = Date.now();
+  notes.unshift({id, title:'Untitled', body:''});
+  activeNoteId = id;
+  renderNotes(); loadNoteIntoEditor();
+}
+function selectNote(id){ activeNoteId = id; renderNotes(); loadNoteIntoEditor(); }
+function loadNoteIntoEditor(){
+  const n = notes.find(n=>n.id===activeNoteId);
+  document.getElementById('noteTitle').value = n ? n.title : '';
+  document.getElementById('noteBody').value = n ? n.body : '';
+}
+function autosaveNote(){
+  const n = notes.find(n=>n.id===activeNoteId);
+  if(!n) return;
+  n.title = document.getElementById('noteTitle').value;
+  n.body = document.getElementById('noteBody').value;
+  document.getElementById('noteSaveStatus').textContent = 'Saved just now';
+  renderNotes();
+}
+function renderNotes(){
+  const q = (document.getElementById('noteSearch')?.value || '').toLowerCase();
+  const list = document.getElementById('noteList');
+  if(!list) return;
+  const filtered = notes.filter(n => n.title.toLowerCase().includes(q) || n.body.toLowerCase().includes(q));
+  list.innerHTML = filtered.map(n=>
+    `<div class="list-row ${n.id===activeNoteId?'active':''}" style="cursor:pointer;" onclick="selectNote(${n.id})"><span>✎</span><span>${n.title || 'Untitled'}</span></div>`
+  ).join('') || '<div class="muted">No notes found.</div>';
+  document.getElementById('wsNotes').innerHTML = notes.slice(0,3).map(n=>`<div class="muted">• ${n.title}</div>`).join('') || 'No notes yet.';
+}
+function saveQuickNote(){
+  const body = document.getElementById('quickNote').value.trim();
+  if(!body){ toast('Nothing to save'); return; }
+  notes.unshift({id:Date.now(), title:'Quick note', body});
+  document.getElementById('quickNote').value = '';
+  renderNotes();
+  toast('Saved to Notes');
+}
+
+/* ---------- PASSWORD VAULT ---------- */
+function generatePassword(){
+  const len = +document.getElementById('lenSlider').value;
+  const sym = document.getElementById('optSym').checked;
+  const num = document.getElementById('optNum').checked;
+  const upper = document.getElementById('optUpper').checked;
+  let chars = 'abcdefghijklmnopqrstuvwxyz';
+  if(upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  if(num) chars += '0123456789';
+  if(sym) chars += '!@#$%^&*()_+-=[]{}';
+  let pass = '';
+  for(let i=0;i<len;i++) pass += chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById('genPassOutput').textContent = pass;
+  const strength = Math.min(100, (len*3) + (sym?15:0) + (num?10:0) + (upper?10:0));
+  const fill = document.getElementById('strengthFill');
+  fill.style.width = strength+'%';
+  fill.style.background = strength>75 ? 'var(--success)' : strength>45 ? 'var(--warning)' : 'var(--danger)';
+}
+function copyGenPass(){
+  const text = document.getElementById('genPassOutput').textContent;
+  navigator.clipboard?.writeText(text).then(()=>toast('Copied to clipboard')).catch(()=>toast('Copy failed'));
+}
+let vault = [];
+function addVaultEntry(){
+  const site = document.getElementById('vaultSite').value.trim();
+  const user = document.getElementById('vaultUser').value.trim();
+  const pass = document.getElementById('genPassOutput').textContent;
+  if(!site || !user){ toast('Enter site and username'); return; }
+  vault.push({site, user, pass, revealed:false});
+  document.getElementById('vaultSite').value=''; document.getElementById('vaultUser').value='';
+  renderVault();
+}
+function toggleReveal(i){ vault[i].revealed = !vault[i].revealed; renderVault(); }
+function renderVault(){
+  document.getElementById('vaultList').innerHTML = vault.length ? vault.map((v,i)=>
+    `<div class="list-row"><span>🔑</span><div><div>${v.site}</div><div class="muted">${v.user} · ${v.revealed ? v.pass : '••••••••'}</div></div>
+    <button class="btn ghost" style="margin-left:auto;" onclick="toggleReveal(${i})">${v.revealed?'Hide':'Reveal'}</button></div>`
+  ).join('') : '<div class="muted">No entries yet.</div>';
+}
+generatePassword();
+
+/* ---------- FILE MANAGER ---------- */
+let files = [];
+document.getElementById('fileInput').addEventListener('change', e=>{ addFiles(e.target.files); });
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e=>{ e.preventDefault(); dropZone.style.borderColor='var(--primary)'; });
+dropZone.addEventListener('dragleave', ()=>{ dropZone.style.borderColor='var(--border)'; });
+dropZone.addEventListener('drop', e=>{ e.preventDefault(); dropZone.style.borderColor='var(--border)'; addFiles(e.dataTransfer.files); });
+function addFiles(fileListObj){
+  Array.from(fileListObj).forEach(f=> files.push({name:f.name, size:f.size}));
+  renderFiles();
+}
+function renderFiles(){
+  document.getElementById('fileList').innerHTML = files.length ? files.map(f=>
+    `<div class="list-row"><span>📄</span><span>${f.name}</span><span class="muted" style="margin-left:auto;">${(f.size/1024).toFixed(1)} KB</span></div>`
+  ).join('') : 'Drop files here or click Upload — no files yet.';
+  document.getElementById('wsFiles').innerHTML = files.slice(0,3).map(f=>`<div class="muted">• ${f.name}</div>`).join('') || '<div class="muted">No files yet.</div>';
+}
+
+/* ---------- PDF / MEDIA ---------- */
+function loadPdf(e){
+  const file = e.target.files[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
+  document.getElementById('pdfFrame').innerHTML = `<iframe src="${url}"></iframe>`;
+}
+function loadMedia(e){
+  const file = e.target.files[0]; if(!file) return;
+  const url = URL.createObjectURL(file);
+  const isVideo = file.type.startsWith('video');
+  document.getElementById('mediaCard').innerHTML = isVideo
+    ? `<video src="${url}" controls style="width:100%; border-radius:12px;"></video>`
+    : `<audio src="${url}" controls style="width:100%;"></audio><div class="muted" style="margin-top:8px;">${file.name}</div>`;
+}
+
+/* ---------- TERMINAL ---------- */
+const termOutput = document.getElementById('termOutput');
+function termPrint(text){ const d = document.createElement('div'); d.className='line'; d.textContent = text; termOutput.appendChild(d); termOutput.scrollTop = termOutput.scrollHeight; }
+termPrint('Pixel Terminal v1.0 — type "help" to get started');
+function runCommand(){
+  const input = document.getElementById('termInput');
+  const cmd = input.value.trim();
+  if(!cmd) return;
+  termPrint('pixel@browser:~$ '+cmd);
+  const [base, ...args] = cmd.split(' ');
+  switch(base){
+    case 'help': termPrint('Commands: help, clear, date, echo [text], whoami, theme [name], ls, pwd'); break;
+    case 'clear': termOutput.innerHTML=''; break;
+    case 'date': termPrint(new Date().toString()); break;
+    case 'echo': termPrint(args.join(' ')); break;
+    case 'whoami': termPrint('pixel-user'); break;
+    case 'pwd': termPrint('/home/pixel-user'); break;
+    case 'ls': termPrint('Desktop  Documents  Downloads  Notes  Projects'); break;
+    case 'theme':
+      const t = themes.find(t=>t.id===args[0]);
+      if(t){ applyTheme(t.id); termPrint('Theme set to '+t.name); } else termPrint('Unknown theme. Try: dark, light, midnight, ocean, graphite, pixelblue');
+      break;
+    default: termPrint(base+': command not found');
+  }
+  input.value = '';
+}
+
+/* ---------- DEVELOPER TOOLS ---------- */
+function formatJson(){
+  try{ const obj = JSON.parse(document.getElementById('jsonInput').value); document.getElementById('jsonOutput').textContent = JSON.stringify(obj, null, 2); }
+  catch(err){ document.getElementById('jsonOutput').textContent = 'Invalid JSON: '+err.message; }
+}
+function minifyJson(){
+  try{ const obj = JSON.parse(document.getElementById('jsonInput').value); document.getElementById('jsonOutput').textContent = JSON.stringify(obj); }
+  catch(err){ document.getElementById('jsonOutput').textContent = 'Invalid JSON: '+err.message; }
+}
+function updateColor(){
+  const hex = document.getElementById('colorPick').value;
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  document.getElementById('colorOutput').textContent = `HEX: ${hex}\nRGB: rgb(${r}, ${g}, ${b})`;
+  document.getElementById('gradPreview').style.background = `linear-gradient(135deg, ${hex}, var(--accent))`;
+}
+updateColor();
+function genUuid(){
+  const uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c==='x'?r:(r&0x3|0x8); return v.toString(16);
+  });
+  document.getElementById('uuidOutput').textContent = uuid;
+}
+function b64encode(){
+  try{ document.getElementById('b64Output').textContent = btoa(document.getElementById('b64Input').value); }
+  catch(e){ document.getElementById('b64Output').textContent = 'Could not encode input.'; }
+}
+function b64decode(){
+  try{ document.getElementById('b64Output').textContent = atob(document.getElementById('b64Input').value); }
+  catch(e){ document.getElementById('b64Output').textContent = 'Invalid Base64 input.'; }
+}
+function testRegex(){
+  const raw = document.getElementById('regexPattern').value;
+  const str = document.getElementById('regexInput').value;
+  const match = raw.match(/^\/(.*)\/([a-z]*)$/);
+  try{
+    const re = match ? new RegExp(match[1], match[2]) : new RegExp(raw);
+    const results = [...str.matchAll(new RegExp(re.source, re.flags.includes('g')?re.flags:re.flags+'g'))];
+    document.getElementById('regexOutput').textContent = results.length ? results.map(r=>`Match: "${r[0]}" at index ${r.index}`).join('\n') : 'No matches found.';
+  }catch(e){ document.getElementById('regexOutput').textContent = 'Invalid regex: '+e.message; }
+}
+function renderHtml(){
+  const doc = document.getElementById('htmlPreview').contentWindow.document;
+  doc.open(); doc.write(document.getElementById('htmlInput').value); doc.close();
+}
+
+/* ---------- AI ASSISTANT ---------- */
+function toggleAI(){ document.getElementById('aiPanel').classList.toggle('open'); }
+function sendAiMessage(){
+  const input = document.getElementById('aiInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const box = document.getElementById('aiMessages');
+  box.insertAdjacentHTML('beforeend', `<div class="ai-msg user">${text.replace(/</g,'&lt;')}</div>`);
+  input.value='';
+  box.scrollTop = box.scrollHeight;
+  setTimeout(()=>{
+    box.insertAdjacentHTML('beforeend', `<div class="ai-msg bot">This is a demo AI panel — wire it up to a real model to get live answers on code, writing, and research.</div>`);
+    box.scrollTop = box.scrollHeight;
+  }, 500);
+}
+
+/* ---------- FOCUS TIMER ---------- */
+let timerSeconds = 25*60; let timerInterval = null;
+function timerTick(){
+  timerSeconds--;
+  const m = String(Math.floor(timerSeconds/60)).padStart(2,'0');
+  const s = String(timerSeconds%60).padStart(2,'0');
+  document.getElementById('timerDisplay').textContent = m+':'+s;
+  if(timerSeconds<=0){ clearInterval(timerInterval); timerInterval=null; toast('Focus session complete'); }
+}
+function timerStart(){ if(timerInterval) return; timerInterval = setInterval(timerTick, 1000); }
+function timerReset(){ clearInterval(timerInterval); timerInterval=null; timerSeconds=25*60; document.getElementById('timerDisplay').textContent='25:00'; }
+
+/* ---------- KEYBOARD SHORTCUTS ---------- */
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key==='t'){ e.preventDefault(); newTab(); }
+  if(e.ctrlKey && e.key==='l'){ e.preventDefault(); document.getElementById('addressInput').focus(); }
+  if(e.ctrlKey && e.key==='h'){ e.preventDefault(); navigate('history'); }
+  if(e.ctrlKey && e.key==='j'){ e.preventDefault(); navigate('downloads'); }
+  if(e.ctrlKey && e.key==='b'){ e.preventDefault(); navigate('bookmarks'); }
+  if(e.ctrlKey && e.key===','){ e.preventDefault(); navigate('settings'); }
+});
+
+/* ---------- PWA: SERVICE WORKER + INSTALL PROMPT ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{/* offline caching unavailable */});
+  });
+}
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const btn = document.getElementById('installBtn');
+  const hint = document.getElementById('installHint');
+  if(btn){ btn.style.display = 'inline-block'; }
+  if(hint){ hint.textContent = 'Click "Install app" to add Pixel Browser to your device.'; }
+});
+function promptInstall(){
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(()=>{ deferredInstallPrompt = null; document.getElementById('installBtn').style.display='none'; });
+}
+window.addEventListener('appinstalled', ()=> toast('Pixel Browser installed'));
+
+/* ---------- INIT ---------- */
+renderThemeSwatches();
+renderPinned();
+renderBookmarks();
+renderDownloads();
+renderHistory();
+renderNotes();
+loadNoteIntoEditor();
+renderFiles();
+renderTabs();
+</script>
+</body>
+</html>
