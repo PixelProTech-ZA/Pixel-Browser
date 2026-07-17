@@ -699,13 +699,14 @@ function renderPinned(){
 
 /* ---------- TABS / BROWSER ---------- */
 let tabs = []; let activeTabId = null; let tabCounter = 0;
-function newTab(){ openTab('about:blank', 'New Tab'); navigate('browser'); }
-function openTab(url, name){
+function newTab(){ openTab('about:blank', 'New Tab', {type:'url'}); navigate('browser'); }
+function openTab(url, name, opts){
+  opts = opts || {type:'url'};
   const id = 'tab'+(++tabCounter);
-  tabs.push({id, url, name: name || url, pinned:false, muted:false});
+  tabs.push({id, url, name: name || url, type: opts.type, query: opts.query || null, pinned:false, muted:false});
   activeTabId = id;
   renderTabs(); renderBrowserFrame();
-  addHistory(name||url, url);
+  addHistory(name || url, opts.type==='search' ? ('Pixel Search: '+opts.query) : url);
 }
 function closeTab(id, e){
   if(e) e.stopPropagation();
@@ -717,22 +718,33 @@ function selectTab(id){ activeTabId = id; renderTabs(); renderBrowserFrame(); }
 function renderTabs(){
   document.getElementById('tabsBar').innerHTML = tabs.map(t=>
     `<div class="tab-chip ${t.id===activeTabId?'active':''}" onclick="selectTab('${t.id}')">
-      <span>${t.pinned?'📌':''}${t.muted?'🔇':'🌐'} ${t.name}</span>
+      <span>${t.pinned?'📌':''}${t.type==='search' ? '🔎' : (t.muted?'🔇':'🌐')} ${t.name}</span>
       <span class="close-x" onclick="closeTab('${t.id}', event)">✕</span>
     </div>`
   ).join('') || '<span class="muted">No tabs open — press + or Ctrl+T</span>';
 }
+
 function renderBrowserFrame(){
   const frame = document.getElementById('browserFrame');
-  const tab = tabs.find(t=>t.id===activeTabId);
   const extBtn = document.getElementById('openExternalBtn');
   const label = document.getElementById('browserUrlLabel');
+  const tab = tabs.find(t=>t.id===activeTabId);
+  frame.removeAttribute('style');
+
   if(!tab || tab.url==='about:blank'){
-    frame.innerHTML = '<div class="muted">Enter a URL in the address bar and press Enter to load a tab.</div>';
+    frame.innerHTML = '<div class="muted">Enter a URL, or type a search, in the address bar and press Enter.</div>';
     extBtn.style.display = 'none';
     label.textContent = '';
     return;
   }
+
+  if(tab.type === 'search'){
+    label.textContent = 'Pixel Search — "'+tab.query+'"';
+    extBtn.style.display = 'none';
+    renderSearchResults(tab.query, frame);
+    return;
+  }
+
   label.textContent = tab.url;
   extBtn.style.display = 'inline-block';
   frame.innerHTML = `<iframe id="liveFrame" src="${tab.url}" title="${tab.name}"></iframe>`;
@@ -749,23 +761,78 @@ function renderBrowserFrame(){
     }
   }, 2800);
 }
+
+/* Pixel Search — renders results natively inside the app instead of
+   embedding a search engine's page (which most engines block via
+   X-Frame-Options and would otherwise show as a blank/broken frame). */
+async function renderSearchResults(query, frame){
+  frame.style.cssText = 'display:block; overflow-y:auto; padding:0;';
+  frame.innerHTML = `<div style="padding:28px;"><div class="muted">Searching…</div></div>`;
+  const engineButtons = () => {
+    const engine = document.getElementById('engineSelect').value;
+    const engines = {'Google':'https://www.google.com/search?q=','DuckDuckGo':'https://duckduckgo.com/?q=','Brave Search':'https://search.brave.com/search?q=','Kagi':'https://kagi.com/search?q=','Bing':'https://www.bing.com/search?q=','SearXNG':'https://searx.org/?q=','Custom':'https://www.google.com/search?q='};
+    const url = (engines[engine]||engines.Google) + encodeURIComponent(query);
+    return `<button class="btn" onclick="window.open('${url}','_blank','noopener,noreferrer')">See full results on the web ↗</button>`;
+  };
+  try{
+    const res = await fetch('https://api.duckduckgo.com/?q='+encodeURIComponent(query)+'&format=json&no_html=1&skip_disambig=1&t=pixelbrowser');
+    if(!res.ok) throw new Error('search unavailable');
+    const data = await res.json();
+    const topics = (data.RelatedTopics || []).filter(t=>t.FirstURL && t.Text).slice(0, 8);
+    const hasAnswer = data.AbstractText || data.Answer || topics.length;
+    if(!hasAnswer){
+      frame.innerHTML = `<div style="padding:28px; max-width:640px;">
+        <div class="muted" style="margin-bottom:14px;">No instant answer found for "<strong style="color:var(--text)">${escapeHtml(query)}</strong>".</div>
+        ${engineButtons()}
+      </div>`;
+      return;
+    }
+    let html = `<div style="padding:28px; max-width:680px;">`;
+    if(data.Heading){ html += `<h2 style="font-size:20px; margin-bottom:10px;">${escapeHtml(data.Heading)}</h2>`; }
+    if(data.Answer){ html += `<div class="card" style="margin-bottom:16px;">${escapeHtml(data.Answer)}</div>`; }
+    if(data.AbstractText){
+      html += `<div class="card" style="margin-bottom:16px; display:flex; gap:16px; align-items:flex-start;">`;
+      if(data.Image){ html += `<img src="https://duckduckgo.com${data.Image}" style="width:72px; height:72px; border-radius:12px; object-fit:cover; flex-shrink:0;">`; }
+      html += `<div><div style="line-height:1.6; margin-bottom:8px;">${escapeHtml(data.AbstractText)}</div>`;
+      if(data.AbstractURL){ html += `<button class="btn ghost" onclick="window.open('${data.AbstractURL}','_blank','noopener,noreferrer')">Read source ↗</button>`; }
+      html += `</div></div>`;
+    }
+    if(topics.length){
+      html += `<div class="muted" style="margin-bottom:8px; letter-spacing:1px; font-size:10px; text-transform:uppercase;">Related</div>`;
+      html += topics.map(t => `<div class="list-row" style="cursor:pointer;" onclick="window.open('${t.FirstURL}','_blank','noopener,noreferrer')"><span>🔎</span><span>${escapeHtml(t.Text)}</span></div>`).join('');
+    }
+    html += `<div style="margin-top:18px;">${engineButtons()}</div></div>`;
+    frame.innerHTML = html;
+  }catch(err){
+    frame.innerHTML = `<div style="padding:28px; max-width:640px;">
+      <div class="muted" style="margin-bottom:14px;">Couldn't load instant results for "<strong style="color:var(--text)">${escapeHtml(query)}</strong>" right now.</div>
+      ${engineButtons()}
+    </div>`;
+  }
+}
+function escapeHtml(str){
+  const d = document.createElement('div'); d.textContent = str; return d.innerHTML;
+}
+
 function openExternal(){
   const tab = tabs.find(t=>t.id===activeTabId);
-  if(tab && tab.url !== 'about:blank') window.open(tab.url, '_blank', 'noopener,noreferrer');
+  if(tab && tab.url && tab.url !== 'about:blank') window.open(tab.url, '_blank', 'noopener,noreferrer');
 }
+
+function isLikelyUrl(val){
+  return /^https?:\/\//i.test(val) || /^[\w-]+(\.[\w-]+)+([\/?#].*)?$/i.test(val);
+}
+
 document.getElementById('addressInput').addEventListener('keydown', e=>{
   if(e.key==='Enter'){
     let val = e.target.value.trim();
     if(!val) return;
-    let url;
-    if(/^https?:\/\//i.test(val)) url = val;
-    else if(/^[\w-]+\.[a-z]{2,}(\/.*)?$/i.test(val)) url = 'https://'+val;
-    else {
-      const engine = document.getElementById('engineSelect').value;
-      const engines = {'Google':'https://www.google.com/search?q=','DuckDuckGo':'https://duckduckgo.com/?q=','Brave Search':'https://search.brave.com/search?q=','Kagi':'https://kagi.com/search?q=','Bing':'https://www.bing.com/search?q=','SearXNG':'https://searx.org/?q=','Custom':'https://www.google.com/search?q='};
-      url = (engines[engine]||engines.Google) + encodeURIComponent(val);
+    if(isLikelyUrl(val)){
+      const url = /^https?:\/\//i.test(val) ? val : 'https://'+val;
+      openTab(url, val.slice(0,28), {type:'url'});
+    } else {
+      openTab(null, val.slice(0,28), {type:'search', query: val});
     }
-    openTab(url, val.slice(0,28));
     navigate('browser');
     e.target.value = '';
   }
