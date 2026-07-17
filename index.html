@@ -157,8 +157,10 @@ input, textarea, select{
 input:focus, textarea:focus, select:focus{ border-color:var(--primary); }
 .list-row{
   display:flex; align-items:center; gap:12px; padding:10px 12px; border-radius:10px;
-  transition:background var(--dur);
+  transition:background var(--dur); min-height:44px;
 }
+.list-row.clickable{ cursor:pointer; -webkit-tap-highlight-color:transparent; touch-action:manipulation; }
+.list-row.clickable:active{ background:var(--card); }
 .list-row:hover{ background:var(--panel); }
 .progress{ height:6px; background:var(--panel); border-radius:4px; overflow:hidden; }
 .progress-fill{ height:100%; background:linear-gradient(90deg,var(--primary),var(--accent)); transition:width .3s ease; }
@@ -693,7 +695,7 @@ const pinned = [
 ];
 function renderPinned(){
   document.getElementById('pinnedSites').innerHTML = pinned.map(p=>
-    `<div class="list-row"><span>🔗</span><span>${p.name}</span><button class="btn ghost" style="margin-left:auto;" onclick="openTab('${p.url}','${p.name}')">Open</button></div>`
+    `<div class="list-row clickable" onclick="openTab('${p.url}','${p.name}')"><span>🔗</span><span>${p.name}</span><span class="muted" style="margin-left:auto;">↗</span></div>`
   ).join('');
 }
 
@@ -799,7 +801,7 @@ async function renderSearchResults(query, frame){
     }
     if(topics.length){
       html += `<div class="muted" style="margin-bottom:8px; letter-spacing:1px; font-size:10px; text-transform:uppercase;">Related</div>`;
-      html += topics.map(t => `<div class="list-row" style="cursor:pointer;" onclick="window.open('${t.FirstURL}','_blank','noopener,noreferrer')"><span>🔎</span><span>${escapeHtml(t.Text)}</span></div>`).join('');
+      html += topics.map(t => `<div class="list-row clickable" onclick="window.open('${t.FirstURL}','_blank','noopener,noreferrer')"><span>🔎</span><span>${escapeHtml(t.Text)}</span></div>`).join('');
     }
     html += `<div style="margin-top:18px;">${engineButtons()}</div></div>`;
     frame.innerHTML = html;
@@ -847,7 +849,7 @@ function renderHistory(){
   if(!list) return;
   const filtered = history.filter(h => h.name.toLowerCase().includes(q) || h.url.toLowerCase().includes(q));
   list.innerHTML = filtered.length ? filtered.map(h=>
-    `<div class="list-row"><span>⟲</span><div><div>${h.name}</div><div class="muted">${h.url}</div></div><span class="muted" style="margin-left:auto;">${h.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>`
+    `<div class="list-row clickable" onclick="openTab('${h.url}','${h.name}')"><span>⟲</span><div><div>${h.name}</div><div class="muted">${h.url}</div></div><span class="muted" style="margin-left:auto;">${h.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>`
   ).join('') : '<div class="muted">No history yet — browse a site to see it appear here.</div>';
 }
 function clearHistory(mode){ history = []; renderHistory(); toast('History cleared'); }
@@ -865,9 +867,8 @@ function addBookmark(){
 function removeBookmark(i){ bookmarks.splice(i,1); renderBookmarks(); }
 function renderBookmarks(){
   document.getElementById('bookmarkList').innerHTML = bookmarks.map((b,i)=>
-    `<div class="list-row"><span>★</span><div><div>${b.name}</div><div class="muted">${b.url}</div></div>
-    <button class="btn ghost" style="margin-left:auto;" onclick="openTab('${b.url}','${b.name}')">Open</button>
-    <button class="btn ghost" onclick="removeBookmark(${i})">Remove</button></div>`
+    `<div class="list-row clickable" onclick="openTab('${b.url}','${b.name}')"><span>★</span><div><div>${b.name}</div><div class="muted">${b.url}</div></div>
+    <button class="btn ghost" style="margin-left:auto;" onclick="event.stopPropagation(); removeBookmark(${i})">Remove</button></div>`
   ).join('') || '<div class="muted">No bookmarks yet.</div>';
 }
 
