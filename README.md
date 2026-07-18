@@ -1,6 +1,21 @@
-# Pixel Browser
+# Pixel Browser v2.0
 
-A premium browser workspace by **PixelProTech Solutions** — browsing, productivity, AI, files, and developer tools in one installable app. Built with plain HTML, CSS, and vanilla JavaScript (no frameworks).
+A premium operating workspace by **PixelProTech Solutions** — browsing, projects, knowledge, assets, and developer tools in one installable app. Built with plain HTML, CSS, and vanilla JavaScript (no frameworks). Icons are a proper inline SVG set (no emoji).
+
+## What changed in v2.0
+
+- **Removed generic/demo content**: weather widget, focus timer, fake download simulator, demo AI chatter, preloaded example bookmarks, and the "Good morning" filler greeting are all gone. Password Vault was removed entirely rather than ship a demo-quality security feature.
+- **Sidebar reorganized** into Workspace (Home, Browser, Projects, Assets, Knowledge), Browsing (Downloads, Bookmarks, Activity), Developer (Terminal, Developer Tools), AI (Pixel AI), System (Settings, Updates).
+- **Home is now a command centre**: real storage/memory/network stats pulled from actual browser APIs (`navigator.storage.estimate()`, `performance.memory`, `navigator.connection`), Continue Working (from the unified Activity Log), Quick Launch, Recent Files, and Browser Health — no decorative widgets.
+- **Search simplified** to Pixel / Private / Custom modes (instead of exposing 7 engines); advanced config lives in Settings.
+- **Restrained color palette**: one brand accent (purple) plus semantic success/warning/danger; everything else is grayscale.
+- **Notes → Knowledge Base**: markdown editor with a live preview (headings, bold/italic, code, checklists, links), pinned notes, search, and export to a real `.md` file (which logs to Downloads).
+- **History → Activity Log**: a unified timeline across browsing, Knowledge, Projects, Assets, Bookmarks, and Pixel AI.
+- **Files → Assets**: grid/list views, folder filters (Images/Documents/Media), drag-and-drop, inline preview.
+- **Developer Tools expanded**: JSON formatter, color/gradient, UUID, Base64, regex tester, HTML preview, plus new Hash generator (SHA-1/256/384/512 via SubtleCrypto), Timestamp converter, URL encoder/decoder, JWT decoder, and a line-level Diff viewer.
+- **Pixel AI** is now its own dedicated module (not a hidden side panel), with a minimal "Online" status instead of chatbot personality.
+- **Downloads** only logs real, user-initiated exports from within the app (e.g. exporting a note) — no fake simulated files.
+- Tap targets, empty states, and touch styling improved throughout.
 
 ## What's in this folder
 
@@ -28,26 +43,26 @@ No build step, no server-side code, no dependencies — it's fully static.
 
 ## Brand
 
-Colors and contact details are pulled from PixelProTech Solutions' brand sheet:
-
 | Color | Hex | Use |
 |---|---|---|
 | Background | `#0A0A0F` | App background |
-| Purple | `#7B2FFF` | Primary accent |
-| Teal | `#00D4AA` | Secondary accent |
-| White | `#FFFFFF` | Text |
-| Card | `#1A1A2E` | Panels/surfaces |
+| Purple | `#7B2FFF` | Primary accent (only accent color used throughout) |
+| White | `#F5F4F8` | Text |
+| Success / Warning / Danger | `#22C55E` / `#F59E0B` / `#EF4444` | Semantic states only |
 
 Contact: pixelprotechsolutions@gmail.com · 076 645 9348
 
-## Notable behavior
+## Known limits (honest accounting)
 
-- **Real browsing, with an honest limit:** the Browser tab embeds sites in an iframe. Some sites (banks, social platforms) block embedding via security headers no client-side app can override — when that happens, Pixel Browser detects it and offers **"Open in new browser tab ↗"**, which opens the real, live site outside the frame.
-- **No localStorage:** all app state (notes, bookmarks, vault entries, etc.) lives in memory for the session. Wiring up persistence (localStorage, IndexedDB, or a backend) is a natural next step.
-- **Themes:** 6 built-in themes, defaulting to the PixelProTech brand palette, switchable from Settings or the theme-toggle button in the top bar.
+- **No server**: this is a fully static app. Real browsing of sites that block iframe embedding (banks, social platforms) falls back to a genuine "Open in new browser tab" action — there's no way to force embedding without a backend proxy.
+- **No persistence yet**: all state (notes, bookmarks, projects, assets, activity) lives in memory for the session, by design (no localStorage in this environment). Wiring up IndexedDB or a backend is the natural next step for session restore.
+- **Pixel AI replies are a stub**: it's wired for a real conversation UI, but actual model responses need an API key/backend — see `docs.claude.com` for the Messages API.
+- **Terminal is a themed command shell**, not a real system shell — split-terminal and autocomplete are on the roadmap, not yet built.
+- **Diff viewer, hash generator, JWT decoder** are functional and real (no placeholders), but a CSS/JS beautifier was left out of this pass to keep the toolbox focused.
 
 ## Extending it
 
-- Swap the in-memory AI panel replies for real calls to the Anthropic API (see `docs.claude.com` for the Messages API).
-- Add persistence with IndexedDB for notes/bookmarks/vault so data survives a refresh.
-- Replace the iframe-based browser with a native wrapper (e.g. Electron, Tauri, or a Chromium-based shell) if you need to browse sites that block embedding.
+- Swap the Pixel AI stub for real calls to the Anthropic API.
+- Add IndexedDB persistence so Projects/Assets/Knowledge survive a refresh.
+- Wire Projects to actually group tabs/notes/bookmarks together (currently Projects and Quick Launch are tracked separately).
+
