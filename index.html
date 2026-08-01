@@ -1007,17 +1007,22 @@ function renderBrowserFrame(){
   iframe.addEventListener('load', ()=>{
     loaded = true;
     // Some sites block via CSP frame-ancestors rather than X-Frame-Options.
-    // Chrome still fires 'load' for that case, but the frame is silently
-    // swapped to about:blank — which, unlike genuine cross-origin content,
-    // we CAN read back. If reading it succeeds, the load didn't really
-    // happen; treat it the same as a timeout.
+    // Chrome still fires 'load' for that case, but what actually renders is
+    // either a swapped-in about:blank, or (for some hosts, incl. DDG's own
+    // /c/ pages) a same-origin-readable document with nothing in it. Either
+    // way, if we can read the frame back and there's effectively no content,
+    // treat it the same as a genuine failure — never leave the browser's own
+    // bare broken-page glyph on screen.
     try {
+      const doc = iframe.contentDocument;
       const href = iframe.contentWindow.location.href;
-      if(href === 'about:blank' && document.getElementById('liveFrame')){
+      const bodyText = doc && doc.body ? doc.body.innerText.trim() : '';
+      if((href === 'about:blank' || bodyText.length < 5) && document.getElementById('liveFrame')){
         frame.innerHTML = `<div class="empty-state">${icon('shield',28,1.5)}<div class="title">Can't play here yet</div><div class="desc">${escapeHtml(tab.name)} blocks embedding and doesn't offer a public player, so Pixel can't show it inline. Get the desktop app — its native engine isn't limited by this.</div></div>`;
       }
     } catch(e) {
-      // Threw = genuinely cross-origin = it actually loaded. Leave it be.
+      // Threw = genuinely cross-origin and actually rendered content
+      // (e.g. YouTube's own embed player) = leave it be, it really worked.
     }
   });
   setTimeout(()=>{
