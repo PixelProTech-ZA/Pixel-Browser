@@ -1,0 +1,16 @@
+{
+  "name": "Pixel Browser — PixelProTech Solutions",
+  "short_name": "Pixel Browser",
+  "description": "An operating workspace for browsing, projects, knowledge and development, by PixelProTech Solutions.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0A0A0F",
+  "theme_color": "#0A0A0F",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
