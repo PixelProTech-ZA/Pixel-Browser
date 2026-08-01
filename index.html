@@ -330,7 +330,6 @@ input:focus, textarea:focus, select:focus{ border-color:var(--primary); }
       <div style="display:flex; gap:4px; align-items:center; padding:8px 22px 0; overflow-x:auto; flex-shrink:0;" id="tabsBar"></div>
       <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 22px 0; flex-shrink:0;">
         <div class="tiny" id="browserUrlLabel"></div>
-        <button class="btn ghost" id="openExternalBtn" style="display:none;"><span class="i-slot" data-icon="external-link" data-size="13"></span>Open in new tab</button>
       </div>
       <div class="module-body" style="padding-top:10px; display:flex; flex-direction:column; flex:1;">
         <div style="flex:1; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:var(--surface); display:flex; align-items:center; justify-content:center;" id="browserFrame">
@@ -831,6 +830,60 @@ const hasPixel = typeof window.pixel !== 'undefined';
 let tabs = []; let activeTabId = null; let tabCounter = 0;
 const tabNavState = {}; // tabId -> {canGoBack, canGoForward, loading}
 
+// ---- Smart playback resolver ----
+// Pixel's rule: never bounce the user out to another browser to play
+// something. Most "embedding blocked" pain isn't really about the whole
+// site refusing to embed — it's that we asked for the *chrome'd, full*
+// page (youtube.com/watch, open.spotify.com/track, ...), which sites lock
+// down on purpose. Those same platforms ship dedicated embed/player URLs
+// that are *designed* to live inside someone else's frame. Detect those
+// and quietly swap to them before we ever load anything — so it just
+// plays, under Pixel's own face, no external tab, no popup, no middleman.
+function resolvePlayableUrl(rawUrl){
+  if(!rawUrl || rawUrl === 'about:blank') return rawUrl;
+  let u;
+  try { u = new URL(rawUrl); } catch(e){ return rawUrl; }
+  const host = u.hostname.replace(/^www\./,'');
+  const path = u.pathname;
+
+  // YouTube: watch?v=ID / youtu.be/ID / shorts/ID -> embed player
+  if(host === 'youtube.com' || host === 'm.youtube.com'){
+    const id = u.searchParams.get('v') || (path.startsWith('/shorts/') ? path.split('/')[2] : null);
+    if(id) return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+  }
+  if(host === 'youtu.be'){
+    const id = path.slice(1);
+    if(id) return `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`;
+  }
+
+  // Vimeo: vimeo.com/ID -> player.vimeo.com/video/ID
+  if(host === 'vimeo.com'){
+    const id = path.split('/').filter(Boolean)[0];
+    if(id && /^\d+$/.test(id)) return `https://player.vimeo.com/video/${id}?autoplay=1`;
+  }
+
+  // Twitch: twitch.tv/channel -> embed player (needs a parent= domain)
+  if(host === 'twitch.tv'){
+    const seg = path.split('/').filter(Boolean);
+    const parent = window.location.hostname || 'localhost';
+    if(seg[0] === 'videos' && seg[1]) return `https://player.twitch.tv/?video=${seg[1]}&parent=${parent}&autoplay=true`;
+    if(seg[0]) return `https://player.twitch.tv/?channel=${seg[0]}&parent=${parent}&autoplay=true`;
+  }
+
+  // Spotify: open.spotify.com/track|album|playlist/ID -> /embed/ variant
+  if(host === 'open.spotify.com'){
+    const seg = path.split('/').filter(Boolean);
+    if(seg.length >= 2 && !seg[0].startsWith('embed')) return `https://open.spotify.com/embed/${seg[0]}/${seg[1]}`;
+  }
+
+  // SoundCloud: hand the real page URL to SC's own embeddable player widget
+  if(host === 'soundcloud.com'){
+    return `https://w.soundcloud.com/player/?url=${encodeURIComponent(u.toString())}&auto_play=true&color=%237b2fff`;
+  }
+
+  return rawUrl; // not a known media host — load as-is
+}
+
 function newTab(){ openTab('about:blank', 'New tab', {type:'url'}); navigate('browser'); }
 function openTab(url, name, opts){
   opts = opts || {type:'url'};
@@ -839,7 +892,7 @@ function openTab(url, name, opts){
   tabs.push(tab);
   activeTabId = id;
   if(hasPixel && opts.type !== 'search'){
-    window.pixel.tabs.create(id, url, {private: tab.private});
+    window.pixel.tabs.create(id, resolvePlayableUrl(url), {private: tab.private});
     window.pixel.tabs.activate(id);
   }
   renderTabs(); renderBrowserFrame(); updateTabCountBadge();
@@ -886,7 +939,6 @@ document.getElementById('toggleDevToolsBtn')?.addEventListener('click', ()=>{
 
 function renderBrowserFrame(){
   const frame = document.getElementById('browserFrame');
-  const extBtn = document.getElementById('openExternalBtn');
   const label = document.getElementById('browserUrlLabel');
   const tab = tabs.find(t=>t.id===activeTabId);
   frame.removeAttribute('style');
@@ -895,14 +947,13 @@ function renderBrowserFrame(){
 
   if(!tab || tab.url==='about:blank'){
     frame.innerHTML = emptyState('globe', 'No page open', 'Enter a URL or a search in the address bar to get started.');
-    extBtn.style.display = 'none'; label.textContent = '';
+    label.textContent = '';
     if(hasPixel) window.pixel.tabs.activate(null);
     return;
   }
 
   if(tab.type === 'search'){
     label.textContent = 'Pixel Search — "'+tab.query+'"';
-    extBtn.style.display = 'none';
     if(hasPixel) window.pixel.tabs.activate(null); // native view stays hidden behind the results panel
 
     if(tab.searchMode === 'private'){
@@ -919,7 +970,7 @@ function renderBrowserFrame(){
   }
 
   label.textContent = (tab.private ? '\u{1F576} Private \u2014 ' : '') + (tab.error ? 'Failed to load: '+tab.error : tab.url);
-  extBtn.style.display = 'inline-flex';
+  const playUrl = resolvePlayableUrl(tab.url);
 
   if(hasPixel){
     // Desktop app: this element is left empty on purpose. It's a positioned
@@ -931,26 +982,23 @@ function renderBrowserFrame(){
     return;
   }
 
-  // PWA (mobile/web): no native engine available, so fall back to a best-
-  // effort <iframe>. Many sites allow this; the ones that send
-  // X-Frame-Options/CSP frame-ancestors headers to block it will time out
-  // below and offer the explicit "Open in new browser tab" escape hatch.
-  frame.innerHTML = `<iframe id="liveFrame" src="${tab.url}" title="${escapeHtml(tab.name)}" style="width:100%; height:100%; border:none;"></iframe>`;
+  // PWA (mobile/web): no native engine available, so this loads in an
+  // <iframe>. resolvePlayableUrl() already swapped known video/music links
+  // (YouTube, Vimeo, Twitch, Spotify, SoundCloud) for their dedicated embed
+  // players above, which are built to run inside someone else's frame — so
+  // the common "I just want to watch/listen to this" case plays right here.
+  // A handful of sites (Google, X, Facebook, banking, etc.) still refuse
+  // embedding outright with no public player variant; for those we simply
+  // say so — Pixel never bounces you out to another browser window.
+  frame.innerHTML = `<iframe id="liveFrame" src="${playUrl}" title="${escapeHtml(tab.name)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" style="width:100%; height:100%; border:none;"></iframe>`;
   const iframe = document.getElementById('liveFrame');
   let loaded = false;
   iframe.addEventListener('load', ()=>{ loaded = true; });
   setTimeout(()=>{
     if(!loaded && document.getElementById('liveFrame')){
-      frame.innerHTML = `<div class="empty-state">${icon('shield',28,1.5)}<div class="title">Embedding blocked</div><div class="desc">${escapeHtml(tab.name)} can't be displayed inside Pixel Browser — it blocks embedding for security. Get the desktop app for a real embedded engine that isn't limited by this.</div><button class="btn" onclick="openExternal()" style="margin-top:6px;">Open in new browser tab</button></div>`;
+      frame.innerHTML = `<div class="empty-state">${icon('shield',28,1.5)}<div class="title">Can't play here yet</div><div class="desc">${escapeHtml(tab.name)} doesn't offer an embeddable version, so Pixel can't show it inline. Get the desktop app — its native engine isn't limited by this.</div></div>`;
     }
   }, 2800);
-}
-document.getElementById('openExternalBtn').addEventListener('click', openExternal);
-function openExternal(){
-  const tab = tabs.find(t=>t.id===activeTabId);
-  if(!tab || !tab.url || tab.url === 'about:blank') return;
-  if(hasPixel) window.pixel.openExternal(tab.url);
-  else window.open(tab.url, '_blank', 'noopener,noreferrer'); // fallback only when running outside Electron
 }
 
 function updateNavButtons(){
